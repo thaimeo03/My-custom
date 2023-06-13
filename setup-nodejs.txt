@@ -1,0 +1,97 @@
+mkdir -p dist src src/constants src/controllers src/middlewares src/models src/models/database src/routes src/services src/utils &&
+touch src/index.ts src/type.d.ts .editorconfig .env .eslintignore .eslintrc .gitignore .prettierignore .prettierrc nodemon.json tsconfig.json &&
+npm init -y && npm i -D typescript @types/node eslint prettier eslint-config-prettier eslint-plugin-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser ts-node tsc-alias tsconfig-paths rimraf nodemon &&
+npm i express && npm i @types/express -D &&
+echo '{
+  "compilerOptions": {
+    "module": "CommonJS", // Quy định output module được sử dụng
+    "moduleResolution": "node", //
+    "target": "ES2020", // Target ouput cho code
+    "outDir": "dist", // Đường dẫn output cho thư mục build
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    "strict": true /* Enable all strict type-checking options. */,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+    "baseUrl": ".", // Đường dẫn base cho các import
+    "paths": {
+      "~/*": ["src/*"] // Đường dẫn tương đối cho các import (alias)
+    }
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
+  "files": ["src/type.d.ts"], // Các file dùng để defined global type cho dự án
+  "include": ["src/**/*"] // Đường dẫn include cho các file cần build
+}
+' >> tsconfig.json &&
+
+echo '{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "eslint-config-prettier", "prettier"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "prettier/prettier": [
+      "warn",
+      {
+        "arrowParens": "always",
+        "semi": false,
+        "trailingComma": "none",
+        "tabWidth": 2,
+        "endOfLine": "auto",
+        "useTabs": false,
+        "singleQuote": true,
+        "printWidth": 120,
+        "jsxSingleQuote": true
+      }
+    ]
+  }
+}
+' >> .eslintrc &&
+echo "node_modules/
+dist/
+" >> .eslintignore &&
+echo '{
+  "arrowParens": "always",
+  "semi": false,
+  "trailingComma": "none",
+  "tabWidth": 2,
+  "endOfLine": "auto",
+  "useTabs": false,
+  "singleQuote": true,
+  "printWidth": 120,
+  "jsxSingleQuote": true
+}
+' >> .prettierrc &&
+echo "node_modules/
+dist/
+" >> .prettierignore &&
+echo "[*]
+indent_size = 2
+indent_style = space
+" >> .editorconfig &&
+echo "node_modules/
+dist/
+" >> .gitignore &&
+echo '{
+  "watch": ["src"],
+  "ext": ".ts,.js",
+  "ignore": [],
+  "exec": "npx ts-node ./src/index.ts"
+}
+' >> nodemon.json &&
+echo "import express, { Request, Response } from 'express'
+const app = express()
+
+const HOSTNAME = 'localhost'
+const PORT = 9999
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('Setup dự án Node.js với TypeScript ESLint Prettier thành công!')
+})
+
+app.listen(PORT, HOSTNAME, function () {
+  console.log(\`Server running at http://\${HOSTNAME}:\${PORT}/\`)
+})" >> ./src/index.ts &&
+sed '7i\"dev": "npx nodemon","build": "rimraf ./dist && tsc && tsc-alias","start": "node dist/index.js","lint": "eslint .","lint:fix": "eslint . --fix","prettier": "prettier --check .","prettier:fix": "prettier --write .",' package.json > temp.json && mv temp.json package.json 
