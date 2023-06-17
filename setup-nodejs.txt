@@ -1,4 +1,4 @@
-mkdir -p dist src src/constants src/controllers src/middlewares src/models src/models/database src/routes src/services src/utils &&
+mkdir -p dist src src/constants src/controllers src/middlewares src/models src/models/database src/models/interfaces src/routes src/services src/utils &&
 touch src/index.ts src/type.d.ts .editorconfig .env .eslintignore .eslintrc .gitignore .prettierignore .prettierrc nodemon.json tsconfig.json &&
 npm init -y && npm i -D typescript @types/node eslint prettier eslint-config-prettier eslint-plugin-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser ts-node tsc-alias tsconfig-paths rimraf nodemon &&
 npm i express && npm i @types/express -D &&
