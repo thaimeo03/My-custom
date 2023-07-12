@@ -1,0 +1,112 @@
+import { LoginSuccess } from '@/app/interfaces/User' // Optional
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
+
+const URL = process.env.SERVER_HOST
+
+class Api {
+  private api
+  constructor() {
+    this.api = axios.create({
+      baseURL: URL,
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  async refreshToken(): Promise<string> {
+    try {
+      const refresh_token = localStorage.getItem('refresh_token')
+      if (!refresh_token) throw new Error('No refresh token')
+      const response = await axios.post<LoginSuccess>(`${URL}/users/refresh-token`, {
+        refresh_token
+      })
+      const { refresh_token: new_refresh_token, access_token: new_access_token } = response.data.result
+      localStorage.setItem('access_token', new_access_token)
+      localStorage.setItem('refresh_token', new_refresh_token)
+      return new_access_token
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
+   * Sends a request with the access token.
+   * @param config - The request configuration.
+   * @returns The response from the server.
+   * @throws Error if the request fails.
+   */
+  async sendRequestWithToken<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const token = localStorage.getItem('access_token')
+    try {
+      const response = await this.api({
+        ...config,
+        headers: { ...config.headers, Authorization: `Bearer ${token}` }
+      })
+      return response
+    } catch (error) {
+      if ((error as any).response && (error as any).response.status === 422) {
+        const newToken = await this.refreshToken()
+        if (newToken) {
+          const response = await this.api({
+            ...config,
+            headers: { ...config.headers, Authorization: `Bearer ${newToken}` }
+          })
+          return response
+        }
+      }
+
+      throw error
+    }
+  }
+
+  /**
+   * Sends a GET request with the access token.
+   * @param url - The URL to send the request to.
+   * @param config - The request configuration.
+   * @returns The response from the server.
+   * @throws Error if the request fails.
+   */
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.sendRequestWithToken<T>({ method: 'GET', url, ...config })
+  }
+
+  /**
+   * Sends a POST request with the access token.
+   * @param url - The URL to send the request to.
+   * @param data - The data to send with the request.
+   * @param config - The request configuration.
+   * @returns The response from the server.
+   * @throws Error if the request fails.
+   */
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.sendRequestWithToken<T>({ method: 'POST', url, data, ...config })
+  }
+
+  /**
+   * Sends a PUT request with the access token.
+   * @param url - The URL to send the request to.
+   * @param data - The data to send with the request.
+   * @param config - The request configuration.
+   * @returns The response from the server.
+   * @throws Error if the request fails.
+   */
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.sendRequestWithToken<T>({ method: 'PUT', url, data, ...config })
+  }
+
+  /**
+   * Sends a PATCH request with the access token.
+   * @param url - The URL to send the request to.
+   * @param data - The data to send with the request.
+   * @param config - The request configuration.
+   * @returns The response from the server.
+   * @throws Error if the request fails.
+   */
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.sendRequestWithToken<T>({ method: 'PATCH', url, data, ...config })
+  }
+}
+
+export default new Api()
